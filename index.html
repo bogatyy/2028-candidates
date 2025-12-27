@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2028 Presidential Election - Conditional Probabilities</title>
+    <style>
+        :root {
+            --bg-page: #f5f5f5;
+            --bg-card: #ffffff;
+            --border: #e0e0e0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --republican: #e74c3c;
+            --democrat: #3498db;
+            --accent: #0066cc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .formula {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 600px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        .parties {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .party-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .party-header {
+            padding: 1rem 1.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .party-header.republican {
+            background: linear-gradient(135deg, var(--republican) 0%, #c0392b 100%);
+            color: #fff;
+        }
+
+        .party-header.democrat {
+            background: linear-gradient(135deg, var(--democrat) 0%, #2980b9 100%);
+            color: #fff;
+        }
+
+        .candidates-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .candidates-table th,
+        .candidates-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .candidates-table th {
+            background: #f9f9f9;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .candidates-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .candidates-table tr:hover td {
+            background: #f5f5f5;
+        }
+
+        .candidate-name {
+            font-weight: 500;
+        }
+
+        .prob {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .candidates-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .candidates-table th.sortable:hover {
+            background: #f0f0f0;
+        }
+
+        .candidates-table th .sort-arrow {
+            margin-left: 4px;
+            opacity: 0.3;
+        }
+
+        .candidates-table th.sorted .sort-arrow {
+            opacity: 1;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid var(--republican);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .refresh-btn {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .refresh-btn:hover {
+            opacity: 0.9;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 1.5rem;
+        }
+
+        .data-source {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .data-source a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .data-source a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .parties {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 1rem;
+            }
+
+            .candidates-table th,
+            .candidates-table td {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>2028 Presidential Election Probabilities</h1>
+            <p class="subtitle">Conditional probability of winning, given nomination</p>
+            <div class="formula">
+                P(Win | Nominated) = P(Win) / P(Nominated)
+            </div>
+        </header>
+
+        <div id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading market data from Polymarket...</p>
+            </div>
+        </div>
+
+        <div class="last-updated" id="lastUpdated"></div>
+
+        <div class="data-source">
+            Data from <a href="https://polymarket.com" target="_blank">Polymarket</a> via Gamma API
+        </div>
+
+        <div style="text-align: center;">
+            <button class="refresh-btn" onclick="loadData()">Refresh Data</button>
+        </div>
+    </div>
+
+    <script>
+        // CORS proxy - simplest solution for GitHub Pages
+        const CORS_PROXY = 'https://corsproxy.io/?';
+        const GAMMA_API = 'https://gamma-api.polymarket.com';
+
+        // Event slugs
+        const REPUBLICAN_NOMINATION_SLUG = 'republican-presidential-nominee-2028';
+        const DEMOCRAT_NOMINATION_SLUG = 'democratic-presidential-nominee-2028';
+        const PRESIDENTIAL_WINNER_SLUG = 'presidential-election-winner-2028';
+
+        // Only show top N candidates per party
+        const TOP_N_CANDIDATES = 10;
+
+        async function fetchEvent(slug) {
+            const url = `${CORS_PROXY}${encodeURIComponent(`${GAMMA_API}/events?slug=${slug}`)}`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${slug}: ${response.status}`);
+            }
+            const data = await response.json();
+            return data[0];
+        }
+
+        function parseMarketData(event) {
+            const markets = event.markets || [];
+            const candidateMap = new Map();
+
+            for (const market of markets) {
+                const candidateName = market.groupItemTitle;
+
+                // Skip placeholder names like "Person N", "Person BG"
+                if (!candidateName || /^Person [A-Z]+$/i.test(candidateName)) {
+                    continue;
+                }
+
+                // Calculate midprice from bid/ask
+                const bestBid = parseFloat(market.bestBid) || 0;
+                const bestAsk = parseFloat(market.bestAsk) || 0;
+
+                // Skip markets with no liquidity (bid=0 and wide spread)
+                // A real market has a tight spread; placeholder markets have bid=0, ask~1
+                const spread = bestAsk - bestBid;
+                if (bestBid === 0 && spread > 0.1) {
+                    continue;
+                }
+
+                const midPrice = (bestBid + bestAsk) / 2;
+
+                // Deduplicate: keep the market with tighter spread (more liquid)
+                const existing = candidateMap.get(candidateName);
+                if (!existing || spread < (existing.bestAsk - existing.bestBid)) {
+                    candidateMap.set(candidateName, {
+                        name: candidateName,
+                        probability: midPrice,
+                        bestBid,
+                        bestAsk
+                    });
+                }
+            }
+
+            // Convert to array and sort by probability descending
+            const candidates = Array.from(candidateMap.values());
+            candidates.sort((a, b) => b.probability - a.probability);
+
+            return candidates;
+        }
+
+        function normalizeCandidate(name) {
+            // Normalize for matching: lowercase, remove punctuation, standardize spacing
+            return name
+                .toLowerCase()
+                .replace(/[.']/g, '')      // Remove periods and apostrophes (J.D. -> JD)
+                .replace(/\s+/g, ' ')       // Normalize whitespace
+                .trim();
+        }
+
+        function findWinProbability(candidateName, winProbabilities) {
+            const normalizedName = normalizeCandidate(candidateName);
+
+            // Try exact normalized match first (this handles "J.D. Vance" vs "JD Vance")
+            for (const winner of winProbabilities) {
+                if (normalizeCandidate(winner.name) === normalizedName) {
+                    return winner;
+                }
+            }
+
+            // No fuzzy matching - require exact matches to avoid Trump Jr. matching Trump Sr.
+            return null;
+        }
+
+        function calculateConditionalProbabilities(nominations, winProbabilities) {
+            const results = [];
+
+            // Only take top N by nomination probability
+            const topNominees = nominations.slice(0, TOP_N_CANDIDATES);
+
+            for (const nomination of topNominees) {
+                const winEntry = findWinProbability(nomination.name, winProbabilities);
+
+                if (winEntry && nomination.probability > 0.001) {
+                    const conditionalProb = winEntry.probability / nomination.probability;
+
+                    results.push({
+                        name: nomination.name,
+                        nominationProb: nomination.probability,
+                        winProb: winEntry.probability,
+                        conditionalProb: Math.min(conditionalProb, 1) // Cap at 100%
+                    });
+                } else if (nomination.probability > 0.001) {
+                    // Still show candidate even if no win probability found
+                    results.push({
+                        name: nomination.name,
+                        nominationProb: nomination.probability,
+                        winProb: null,
+                        conditionalProb: null
+                    });
+                }
+            }
+
+            // Sort by conditional probability descending (default), nulls at end
+            results.sort((a, b) => {
+                if (a.conditionalProb === null && b.conditionalProb === null) return 0;
+                if (a.conditionalProb === null) return 1;
+                if (b.conditionalProb === null) return -1;
+                return b.conditionalProb - a.conditionalProb;
+            });
+
+            return results;
+        }
+
+        function formatPercent(prob) {
+            if (prob === null) return '—';
+            return (prob * 100).toFixed(1) + '%';
+        }
+
+        // Store data for sorting
+        const tableData = {};
+
+        function renderPartyTable(title, partyClass, candidates, tableId) {
+            if (candidates.length === 0) {
+                return `
+                    <div class="party-section">
+                        <div class="party-header ${partyClass}">${title}</div>
+                        <div class="error">No candidate data available</div>
+                    </div>
+                `;
+            }
+
+            // Store candidates for sorting
+            tableData[tableId] = candidates;
+
+            const rows = candidates.map(c => `
+                <tr>
+                    <td class="candidate-name">${c.name}</td>
+                    <td class="prob">${formatPercent(c.nominationProb)}</td>
+                    <td class="prob">${formatPercent(c.winProb)}</td>
+                    <td class="prob">${formatPercent(c.conditionalProb)}</td>
+                </tr>
+            `).join('');
+
+            return `
+                <div class="party-section">
+                    <div class="party-header ${partyClass}">${title}</div>
+                    <table class="candidates-table" id="${tableId}">
+                        <thead>
+                            <tr>
+                                <th>Candidate</th>
+                                <th class="sortable" data-sort="nominationProb" data-table="${tableId}">P(Nom)<span class="sort-arrow">▼</span></th>
+                                <th class="sortable" data-sort="winProb" data-table="${tableId}">P(Win)<span class="sort-arrow">▼</span></th>
+                                <th class="sortable sorted" data-sort="conditionalProb" data-table="${tableId}">P(Win|Nom)<span class="sort-arrow">▼</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function sortTable(tableId, sortKey) {
+            const candidates = tableData[tableId];
+            if (!candidates) return;
+
+            // Sort by the selected key (descending, nulls at end)
+            candidates.sort((a, b) => {
+                if (a[sortKey] === null && b[sortKey] === null) return 0;
+                if (a[sortKey] === null) return 1;
+                if (b[sortKey] === null) return -1;
+                return b[sortKey] - a[sortKey];
+            });
+
+            // Re-render tbody
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            tbody.innerHTML = candidates.map(c => `
+                <tr>
+                    <td class="candidate-name">${c.name}</td>
+                    <td class="prob">${formatPercent(c.nominationProb)}</td>
+                    <td class="prob">${formatPercent(c.winProb)}</td>
+                    <td class="prob">${formatPercent(c.conditionalProb)}</td>
+                </tr>
+            `).join('');
+
+            // Update header styles
+            table.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('sorted');
+                if (th.dataset.sort === sortKey) {
+                    th.classList.add('sorted');
+                }
+            });
+        }
+
+        // Add click handlers for sortable headers
+        document.addEventListener('click', (e) => {
+            const th = e.target.closest('th.sortable');
+            if (th) {
+                sortTable(th.dataset.table, th.dataset.sort);
+            }
+        });
+
+        async function loadData() {
+            const content = document.getElementById('content');
+            const lastUpdated = document.getElementById('lastUpdated');
+
+            content.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading market data from Polymarket...</p>
+                </div>
+            `;
+
+            try {
+                // Fetch all three events in parallel
+                const [repNomEvent, demNomEvent, presWinEvent] = await Promise.all([
+                    fetchEvent(REPUBLICAN_NOMINATION_SLUG),
+                    fetchEvent(DEMOCRAT_NOMINATION_SLUG),
+                    fetchEvent(PRESIDENTIAL_WINNER_SLUG)
+                ]);
+
+                // Parse market data
+                const repNominations = parseMarketData(repNomEvent);
+                const demNominations = parseMarketData(demNomEvent);
+                const presWinners = parseMarketData(presWinEvent);
+
+                // Calculate conditional probabilities
+                const repResults = calculateConditionalProbabilities(repNominations, presWinners);
+                const demResults = calculateConditionalProbabilities(demNominations, presWinners);
+
+                // Render results
+                content.innerHTML = `
+                    <div class="parties">
+                        ${renderPartyTable('Republican Candidates', 'republican', repResults, 'rep-table')}
+                        ${renderPartyTable('Democratic Candidates', 'democrat', demResults, 'dem-table')}
+                    </div>
+                `;
+
+                lastUpdated.textContent = `Last updated: ${new Date().toLocaleString()}`;
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                content.innerHTML = `
+                    <div class="error">
+                        <p>Error loading market data: ${error.message}</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                            This may be due to CORS restrictions or API availability.
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>
