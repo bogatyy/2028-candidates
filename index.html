@@ -492,15 +492,20 @@
             }
         });
 
+        let isFirstLoad = true;
+
         async function loadData() {
             const content = document.getElementById('content');
 
-            content.innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>Loading market data from Polymarket...</p>
-                </div>
-            `;
+            // Only show loading spinner on first load
+            if (isFirstLoad) {
+                content.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading market data from Polymarket...</p>
+                    </div>
+                `;
+            }
 
             try {
                 // Fetch all three events in parallel
@@ -526,6 +531,8 @@
                         ${renderPartyTable('Democratic Candidates', 'democrat', demResults, 'dem-table')}
                     </div>
                 `;
+
+                isFirstLoad = false;
 
             } catch (error) {
                 console.error('Error loading data:', error);
