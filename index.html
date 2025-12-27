@@ -178,42 +178,47 @@
             text-align: center;
         }
 
-        .refresh-btn {
-            display: inline-block;
-            margin-top: 1.5rem;
-            padding: 0.75rem 1.5rem;
-            background: var(--accent);
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .refresh-btn:hover {
-            opacity: 0.9;
-        }
-
-        .last-updated {
+        .sources {
             text-align: center;
-            color: var(--text-secondary);
+            margin-top: 2rem;
+        }
+
+        .sources-title {
             font-size: 0.85rem;
-            margin-top: 1.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
         }
 
-        .data-source {
-            text-align: center;
-            margin-top: 1rem;
+        .sources-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
         }
 
-        .data-source a {
+        .sources-links a {
             color: var(--accent);
             text-decoration: none;
+            font-size: 0.9rem;
         }
 
-        .data-source a:hover {
+        .sources-links a:hover {
             text-decoration: underline;
+        }
+
+        .logo {
+            text-align: center;
+            margin-top: 2rem;
+            padding-bottom: 1rem;
+        }
+
+        .logo img {
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+
+        .logo img:hover {
+            opacity: 1;
         }
 
         @media (max-width: 600px) {
@@ -250,14 +255,19 @@
             </div>
         </div>
 
-        <div class="last-updated" id="lastUpdated"></div>
-
-        <div class="data-source">
-            Data from <a href="https://polymarket.com" target="_blank">Polymarket</a> via Gamma API
+        <div class="sources">
+            <div class="sources-title">Source Polymarkets:</div>
+            <div class="sources-links">
+                <a href="https://polymarket.com/event/republican-presidential-nominee-2028" target="_blank">Republican Nomination</a>
+                <a href="https://polymarket.com/event/democratic-presidential-nominee-2028" target="_blank">Democratic Nomination</a>
+                <a href="https://polymarket.com/event/presidential-election-winner-2028" target="_blank">Presidential Winner</a>
+            </div>
         </div>
 
-        <div style="text-align: center;">
-            <button class="refresh-btn" onclick="loadData()">Refresh Data</button>
+        <div class="logo">
+            <a href="https://polymarket.com" target="_blank">
+                <img src="https://polymarket.com/images/brand/logo-black.png" alt="Polymarket" height="32">
+            </a>
         </div>
     </div>
 
@@ -484,7 +494,6 @@
 
         async function loadData() {
             const content = document.getElementById('content');
-            const lastUpdated = document.getElementById('lastUpdated');
 
             content.innerHTML = `
                 <div class="loading">
@@ -518,8 +527,6 @@
                     </div>
                 `;
 
-                lastUpdated.textContent = `Last updated: ${new Date().toLocaleString()}`;
-
             } catch (error) {
                 console.error('Error loading data:', error);
                 content.innerHTML = `
@@ -535,6 +542,9 @@
 
         // Load data on page load
         loadData();
+
+        // Auto refresh every 60 seconds
+        setInterval(loadData, 60000);
     </script>
 </body>
 </html>
