@@ -411,6 +411,11 @@
 
         // Store data for sorting
         const tableData = {};
+        // Track current sort key for each table
+        const tableSortKey = {
+            'rep-table': 'conditionalProb',
+            'dem-table': 'conditionalProb'
+        };
 
         function renderPartyTable(title, partyClass, candidates, tableId) {
             if (candidates.length === 0) {
@@ -424,6 +429,17 @@
 
             // Store candidates for sorting
             tableData[tableId] = candidates;
+
+            // Get current sort key for this table
+            const currentSort = tableSortKey[tableId] || 'conditionalProb';
+
+            // Sort candidates by current sort key
+            candidates.sort((a, b) => {
+                if (a[currentSort] === null && b[currentSort] === null) return 0;
+                if (a[currentSort] === null) return 1;
+                if (b[currentSort] === null) return -1;
+                return b[currentSort] - a[currentSort];
+            });
 
             const rows = candidates.map(c => `
                 <tr>
@@ -441,9 +457,9 @@
                         <thead>
                             <tr>
                                 <th>Candidate</th>
-                                <th class="sortable" data-sort="nominationProb" data-table="${tableId}">P(Nom)<span class="sort-arrow">▼</span></th>
-                                <th class="sortable" data-sort="winProb" data-table="${tableId}">P(Win)<span class="sort-arrow">▼</span></th>
-                                <th class="sortable sorted" data-sort="conditionalProb" data-table="${tableId}">P(Win|Nom)<span class="sort-arrow">▼</span></th>
+                                <th class="sortable${currentSort === 'nominationProb' ? ' sorted' : ''}" data-sort="nominationProb" data-table="${tableId}">P(Nom)<span class="sort-arrow">▼</span></th>
+                                <th class="sortable${currentSort === 'winProb' ? ' sorted' : ''}" data-sort="winProb" data-table="${tableId}">P(Win)<span class="sort-arrow">▼</span></th>
+                                <th class="sortable${currentSort === 'conditionalProb' ? ' sorted' : ''}" data-sort="conditionalProb" data-table="${tableId}">P(Win|Nom)<span class="sort-arrow">▼</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -457,6 +473,9 @@
         function sortTable(tableId, sortKey) {
             const candidates = tableData[tableId];
             if (!candidates) return;
+
+            // Store the sort key
+            tableSortKey[tableId] = sortKey;
 
             // Sort by the selected key (descending, nulls at end)
             candidates.sort((a, b) => {
