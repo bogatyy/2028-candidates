@@ -273,9 +273,8 @@
     </div>
 
     <script>
-        // CORS proxy - simplest solution for GitHub Pages
-        const CORS_PROXY = 'https://corsproxy.io/?';
         const GAMMA_API = 'https://gamma-api.polymarket.com';
+        const LAMBDA_URL = 'https://qkfg4pyzi2.execute-api.us-east-1.amazonaws.com/default/polymarket-proxy';
 
         // Event slugs
         const REPUBLICAN_NOMINATION_SLUG = 'republican-presidential-nominee-2028';
@@ -286,7 +285,8 @@
         const TOP_N_CANDIDATES = 10;
 
         async function fetchEvent(slug) {
-            const url = `${CORS_PROXY}${encodeURIComponent(`${GAMMA_API}/events?slug=${slug}`)}`;
+            const path = `/events?slug=${slug}`;
+            const url = `${LAMBDA_URL}?path=${encodeURIComponent(path)}`;
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`Failed to fetch ${slug}: ${response.status}`);
